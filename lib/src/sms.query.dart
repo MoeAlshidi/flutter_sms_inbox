@@ -66,19 +66,19 @@ class SmsQuery {
   Future<List<SmsMessage>> querySms({
     int? start,
     int? count,
-    String? address,
+    List<String>? addresses,
     int? threadId,
     List<SmsQueryKind> kinds = const [SmsQueryKind.inbox],
     bool sort = false,
   }) async {
     List<SmsMessage> result = [];
-    for (var kind in kinds) {
+    for (var address in addresses!) {
       result.addAll(await _querySms(
         start: start,
         count: count,
         address: address,
         threadId: threadId,
-        kind: kind,
+        kind: SmsQueryKind.inbox,
       ));
     }
 
