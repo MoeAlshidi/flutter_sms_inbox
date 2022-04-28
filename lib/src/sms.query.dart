@@ -24,6 +24,7 @@ class SmsQuery {
     String? address,
     int? threadId,
     SmsQueryKind kind = SmsQueryKind.inbox,
+    DateTime? date,
   }) async {
     Map arguments = {};
     if (start != null && start >= 0) {
@@ -55,9 +56,11 @@ class SmsQuery {
     var snapshot = await _channel.invokeMethod(function, arguments);
     return snapshot.map<SmsMessage>(
       (var data) {
-        var msg = SmsMessage.fromJson(data);
-        msg.kind = msgKind;
-        return msg;
+        if (date!.isAfter(DateTime.fromMillisecondsSinceEpoch(data["date"]))) {
+          var msg = SmsMessage.fromJson(data);
+          msg.kind = msgKind;
+          return msg;
+        }
       },
     ).toList();
   }
@@ -70,6 +73,7 @@ class SmsQuery {
     int? threadId,
     List<SmsQueryKind> kinds = const [SmsQueryKind.inbox],
     bool sort = false,
+    DateTime? date,
   }) async {
     List<SmsMessage> result = [];
     for (var address in addresses!) {
