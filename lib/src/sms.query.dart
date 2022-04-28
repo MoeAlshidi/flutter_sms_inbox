@@ -42,6 +42,7 @@ class SmsQuery {
 
     String function;
     SmsMessageKind msgKind;
+
     if (kind == SmsQueryKind.inbox) {
       function = "getInbox";
       msgKind = SmsMessageKind.received;
@@ -56,11 +57,9 @@ class SmsQuery {
     var snapshot = await _channel.invokeMethod(function, arguments);
     return snapshot.map<SmsMessage>(
       (var data) {
-        if (date!.isAfter(DateTime.fromMillisecondsSinceEpoch(data["date"]))) {
-          var msg = SmsMessage.fromJson(data);
-          msg.kind = msgKind;
-          return msg;
-        }
+        var msg = SmsMessage.fromJson(data);
+        msg.kind = msgKind;
+        return msg;
       },
     ).toList();
   }
@@ -76,6 +75,8 @@ class SmsQuery {
     DateTime? date,
   }) async {
     List<SmsMessage> result = [];
+    List<SmsMessage> finalResults = [];
+
     for (var address in addresses!) {
       result.addAll(await _querySms(
         start: start,
@@ -83,6 +84,7 @@ class SmsQuery {
         address: address,
         threadId: threadId,
         kind: SmsQueryKind.inbox,
+        date: date,
       ));
     }
 
@@ -90,7 +92,15 @@ class SmsQuery {
       result.sort((a, b) => a.compareTo(b));
     }
 
-    return (result);
+    if (date != null) {
+      result.forEach((element) {
+        if (date.isBefore(element.date ?? DateTime.now())) {
+          finalResults.add(element);
+        }
+      });
+    }
+
+    return (finalResults);
   }
 
   /// Get all SMS
